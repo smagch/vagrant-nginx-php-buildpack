@@ -1,2 +1,2 @@
-nginx-php-buildpack
+Nginx + PHP Heroku Buildpack
 ===================
