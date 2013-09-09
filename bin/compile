@@ -56,6 +56,9 @@ fi
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
 echo "-----> Installing boot script"
 cd $BUILD_DIR
+
+ls -al
+
 cat >>boot.sh <<EOF
 #!/usr/bin/env bash
 
