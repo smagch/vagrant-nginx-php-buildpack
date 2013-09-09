@@ -57,17 +57,15 @@ fi
 echo "-----> Installing boot script"
 cd $BUILD_DIR
 
-ls -al
-
 cat >>boot.sh <<EOF
 #!/usr/bin/env bash
 
 echo "Booting nginx"
 
-cp /server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
+cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
 cp /app/vendor/php/php/fpm/status.html /app/status.html
-cp /server/php/php.ini /app/vendor/php/php.ini
-cp /server/nginx/nginx.conf /app/vendor/nginx/conf/nginx.conf
+cp /app/server/php/php.ini /app/vendor/php/php.ini
+cp /app/server/nginx/nginx.conf /app/vendor/nginx/conf/nginx.conf
 
 touch /app/vendor/nginx/logs/access.log /app/vendor/nginx/logs/error.log
 mkdir -p client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
