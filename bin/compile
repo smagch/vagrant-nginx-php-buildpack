@@ -62,7 +62,7 @@ cat >>boot.sh <<EOF
 
 echo "Booting nginx"
 
-mv -rf /app/app/* /app
+mv -f /app/app/* /app
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
 cp /app/vendor/php/php/fpm/status.html /app/status.html
