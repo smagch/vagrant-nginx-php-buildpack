@@ -20,8 +20,8 @@ fi
 
 # END CONFIG
 
-NGINX_PACKAGE_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/nginx-${NGINX_VERSION}-heroku.tar.gz"
-PHP_PACKAGE_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/php-${PHP_VERSION}-with-fpm-heroku.tar.gz"
+NGINX_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/nginx-${NGINX_VERSION}-heroku.tar.gz"
+PHP_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/php-${PHP_VERSION}-with-fpm-heroku.tar.gz"
 
 function indent() {
 	c='s/^/       /'
