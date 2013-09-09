@@ -1,0 +1,79 @@
+#!/bin/bash
+# Usage: bin/compile <build-dir> <cache-dir>
+
+set -e
+set -o pipefail
+
+# START CONFIG
+
+if [ -z "$S3_BUILDS_BUCKET" ]; then
+  S3_BUILDS_BUCKET=ponticlaro-heroku
+fi
+
+if [ -z "$NGINX_VERSION" ]; then
+  NGINX_VERSION=1.4.2
+fi
+
+if [ -z "$PHP_VERSION" ]; then
+  PHP_VERSION=5.5.3
+fi
+
+# END CONFIG
+
+NGINX_PACKAGE_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/nginx-${NGINX_VERSION}-heroku.tar.gz"
+PHP_PACKAGE_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/php-${PHP_VERSION}-with-fpm-heroku.tar.gz"
+
+function indent() {
+	c='s/^/       /'
+	case $(uname) in
+		Darwin) sed -l "$c";;
+		*)      sed -u "$c";;
+	esac
+}
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+mkdir -p $BUILD_DIR $CACHE_DIR
+
+# Nginx
+echo "-----> Installing Nginx"
+cd ${BUILD_DIR}
+if [ ! -d ./vendor/nginx ]; then
+	echo "-----> Bundling Nginx v${NGINX_VERSION}"
+	mkdir -p ./vendor/nginx && cd ./vendor/nginx
+	curl --silent --max-time 60 --location $NGINX_URL | tar xz
+fi
+
+# PHP
+echo "-----> Installing PHP"
+cd ${BUILD_DIR}
+if [ ! -d ./vendor/php ]; then
+	echo "-----> Bundling PHP v${PHP_VERSION}"
+	mkdir -p ./vendor/php && cd ./vendor/php
+	curl --silent --max-time 60 --location $PHP_URL | tar xz
+fi
+
+# setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
+echo "-----> Installing boot script"
+cd $BUILD_DIR
+cat >>boot.sh <<EOF
+#!/usr/bin/env bash
+
+echo "Booting nginx"
+
+cp /app/server/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
+cp /app/vendor/php/php/fpm/status.html /app/status.html
+cp /app/server/php.ini /app/vendor/php/php.ini
+cp /app/server/nginx/nginx.conf > /app/vendor/nginx/conf/nginx.conf
+
+touch /app/vendor/nginx/logs/access.log /app/vendor/nginx/logs/error.log
+mkdir -p client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
+(tail -f -n 0 /app/vendor/nginx/logs/*.log &)
+
+/app/vendor/php/sbin/php-fpm -y /app/vendor/php/etc/php-fpm.conf -c /app/vendor/php/php.ini
+/app/vendor/nginx/sbin/nginx -c /app/vendor/nginx/conf/nginx.conf
+EOF
+
+chmod +x boot.sh
+
+echo "-----> Done with compile"
