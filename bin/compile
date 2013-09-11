@@ -5,6 +5,13 @@ set -e
 set -o pipefail
 
 # START CONFIG
+if [ -n "$BUILDPACK_URL" ]; then 
+	ENVIRONMENT="Heroku"
+else #heroku
+	ENVIRONMENT="Vagrant"
+fi
+
+echo "-----> Environment: ${ENVIRONMENT}"
 
 if [ -z "$S3_BUILDS_BUCKET" ]; then
   S3_BUILDS_BUCKET=ponticlaro-heroku
@@ -31,9 +38,17 @@ function indent() {
 	esac
 }
 
-BUILD_DIR=$1
-CACHE_DIR=$2
-mkdir -p $BUILD_DIR $CACHE_DIR
+if [ $ENVIRONMENT = 'Heroku'  ]; then 
+
+	BUILD_DIR=$1
+	CACHE_DIR=$2
+	mkdir -p $BUILD_DIR $CACHE_DIR
+
+else
+
+	BUILD_DIR="/app"
+
+fi
 
 # Nginx
 echo "-----> Installing Nginx"
@@ -41,7 +56,7 @@ cd ${BUILD_DIR}
 if [ ! -d ./vendor/nginx ]; then
 	echo "-----> Bundling Nginx v${NGINX_VERSION}"
 	mkdir -p ./vendor/nginx && cd ./vendor/nginx
-	curl --silent --max-time 60 --location $NGINX_URL | tar xz
+	curl --silent --location $NGINX_URL | tar xz
 fi
 
 # PHP
@@ -50,34 +65,54 @@ cd ${BUILD_DIR}
 if [ ! -d ./vendor/php ]; then
 	echo "-----> Bundling PHP v${PHP_VERSION}"
 	mkdir -p ./vendor/php && cd ./vendor/php
-	curl --silent --max-time 60 --location $PHP_URL | tar xz
+	curl --silent --location $PHP_URL | tar xz
 fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
 echo "-----> Installing boot script"
-cd $BUILD_DIR
+mkdir -p ${BUILD_DIR}/bin
+cd ${BUILD_DIR}
 
-cat >>boot.sh <<EOF
+cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
-echo "Booting nginx"
+echo "-----> Setting up app"
 
-mv -f /app/app/* /app
+if [ $ENVIRONMENT = 'Heroku' ]; then
+	mv -f app/app/* /app
+fi
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
 cp /app/vendor/php/php/fpm/status.html /app/status.html
 cp /app/server/php/php.ini /app/vendor/php/php.ini
 erb /app/server/nginx/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
-erb /app/server/nginx/project.conf.erb > /app/server/nginx/project.conf
+erb /app/server/nginx/project.conf.erb > /app/vendor/nginx/conf/project.conf
 
 touch /app/vendor/nginx/logs/access.log /app/vendor/nginx/logs/error.log
 mkdir -p client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
 (tail -f -n 0 /app/vendor/nginx/logs/*.log &)
+EOF
 
+chmod +x bin/setup.sh
+
+cat >bin/boot.sh <<EOF
+#!/usr/bin/env bash
+
+if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
+	echo "-----> Killing PHP FPM instances"
+	killall -9 php-fpm
+fi
+echo "-----> Booting PHP FPM"
 /app/vendor/php/sbin/php-fpm -y /app/vendor/php/etc/php-fpm.conf -c /app/vendor/php/php.ini
+
+if [ $ENVIRONMENT = 'Vagrant'  ]; then #stop nginx
+	echo "-----> Stopping nginx"
+	/app/vendor/nginx/sbin/nginx -s stop
+fi
+echo "-----> Booting nginx"
 /app/vendor/nginx/sbin/nginx -c /app/vendor/nginx/conf/nginx.conf
 EOF
 
-chmod +x boot.sh
+chmod +x bin/boot.sh
 
 echo "-----> Done with compile"
