@@ -50,6 +50,8 @@ else
 
 fi
 
+echo $env
+
 # Nginx
 echo "-----> Installing Nginx"
 cd ${BUILD_DIR}
@@ -83,7 +85,7 @@ if [ $ENVIRONMENT = 'Heroku' ]; then
 fi
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
-cp /app/vendor/php/php/fpm/status.html /app/status.html
+cp /app/vendor/php/php/fpm/status.html /app/public/status.html
 cp /app/server/php/php.ini /app/vendor/php/php.ini
 erb /app/server/nginx/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
 erb /app/server/nginx/project.conf.erb > /app/vendor/nginx/conf/project.conf
