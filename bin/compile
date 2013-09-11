@@ -98,6 +98,8 @@ chmod +x bin/setup.sh
 cat >bin/boot.sh <<EOF
 #!/usr/bin/env bash
 
+/app/bin/setup.sh
+
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 	echo "-----> Killing PHP FPM instances"
 	killall -9 php-fpm
