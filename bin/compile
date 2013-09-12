@@ -102,14 +102,14 @@ cat >bin/boot.sh <<EOF
 
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 	echo "-----> Killing PHP FPM instances"
-	killall -9 php-fpm &
+	killall -9 php-fpm
 fi
 echo "-----> Booting PHP FPM"
 /app/vendor/php/sbin/php-fpm -y /app/vendor/php/etc/php-fpm.conf -c /app/vendor/php/php.ini
 
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #stop nginx
 	echo "-----> Stopping nginx"
-	/app/vendor/nginx/sbin/nginx -s stop &
+	/app/vendor/nginx/sbin/nginx -s stop
 fi
 echo "-----> Booting nginx"
 /app/vendor/nginx/sbin/nginx -c /app/vendor/nginx/conf/nginx.conf
