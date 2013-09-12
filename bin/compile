@@ -50,8 +50,6 @@ else
 
 fi
 
-echo $env
-
 # Nginx
 echo "-----> Installing Nginx"
 cd ${BUILD_DIR}
