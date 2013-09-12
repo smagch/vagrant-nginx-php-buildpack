@@ -3,6 +3,8 @@
 
 cat <<EOF
 ---
+addons:
+
 default_process_types:
-  web: sh bin/boot.sh
+
 EOF
