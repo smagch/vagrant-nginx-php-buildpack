@@ -88,6 +88,11 @@ cp /app/server/php/php.ini /app/vendor/php/php.ini
 erb /app/server/nginx/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
 erb /app/server/nginx/project.conf.erb > /app/vendor/nginx/conf/project.conf
 
+# Expose Heroku config vars to PHP-FPM processes
+for var in \`env | cut -f1 -d=\`; do
+  echo "env[\$var] = \\$\${var}" >> /app/vendor/php/etc/php-fpm.conf
+done
+
 touch /app/vendor/nginx/logs/access.log /app/vendor/nginx/logs/error.log
 (tail -f -n 0 /app/vendor/nginx/logs/*.log &)
 EOF
