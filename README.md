@@ -1,2 +1,2 @@
-Nginx + PHP Heroku Buildpack
+Vagrant ready, Nginx + PHP Heroku Buildpack
 ===================
