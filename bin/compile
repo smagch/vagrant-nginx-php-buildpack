@@ -7,7 +7,7 @@ set -o pipefail
 # START CONFIG
 if [ -n "$BUILDPACK_URL" ]; then 
 	ENVIRONMENT="Heroku"
-else #heroku
+else
 	ENVIRONMENT="Vagrant"
 fi
 
@@ -51,19 +51,17 @@ else
 fi
 
 # Nginx
-echo "-----> Installing Nginx"
 cd ${BUILD_DIR}
 if [ ! -d ./vendor/nginx ]; then
-	echo "-----> Bundling Nginx v${NGINX_VERSION}"
+	echo "-----> Installing Nginx v${NGINX_VERSION}"
 	mkdir -p ./vendor/nginx && cd ./vendor/nginx
 	curl --silent --location $NGINX_URL | tar xz
 fi
 
 # PHP
-echo "-----> Installing PHP"
 cd ${BUILD_DIR}
 if [ ! -d ./vendor/php ]; then
-	echo "-----> Bundling PHP v${PHP_VERSION}"
+	echo "-----> Installing PHP v${PHP_VERSION}"
 	mkdir -p ./vendor/php && cd ./vendor/php
 	curl --silent --location $PHP_URL | tar xz
 fi
@@ -72,6 +70,19 @@ fi
 echo "-----> Installing boot script"
 mkdir -p ${BUILD_DIR}/bin
 cd ${BUILD_DIR}
+
+# Remove existing scripts on development VM
+if [[ $ENVIRONMENT = 'Vagrant' ]]; then
+
+	if [ -f /app/bin/setup.sh ]; then
+		rm -rf /app/bin/setup.sh
+	fi
+
+	if [ -f /app/bin/boot.sh ]; then
+		rm -rf /app/bin/boot.sh
+	fi
+
+fi
 
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
