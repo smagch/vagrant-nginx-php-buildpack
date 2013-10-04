@@ -81,9 +81,9 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-if [ -d ./app ]; then
+if [ -d /app/app ]; then
 	echo "-----> Moving /app files"
-	mv -f ./app/* /app
+	mv -f /app/app/* /app
 fi
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
