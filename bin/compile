@@ -38,9 +38,17 @@ function indent() {
 	esac
 }
 
-BUILD_DIR=$1
-CACHE_DIR=$2
-mkdir -p $BUILD_DIR $CACHE_DIR
+if [ $ENVIRONMENT = 'Heroku'  ]; then 
+
+	BUILD_DIR=$1
+	CACHE_DIR=$2
+	mkdir -p $BUILD_DIR $CACHE_DIR
+
+else
+
+	BUILD_DIR="/app"
+
+fi
 
 # Nginx
 cd ${BUILD_DIR}
@@ -81,8 +89,11 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-echo "-----> Moving /app files"
-mv ${BUILD_DIR}/app/* /app
+if [ $ENVIRONMENT = 'Heroku' ]; then
+	mv -f /app/app/* /app
+else
+	cp /app/vendor/php/php/fpm/status.html /app/public/status.html
+fi
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
 cp /app/server/php/php.ini /app/vendor/php/php.ini
