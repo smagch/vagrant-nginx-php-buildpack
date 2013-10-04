@@ -38,17 +38,12 @@ function indent() {
 	esac
 }
 
-if [ $ENVIRONMENT = 'Heroku'  ]; then 
+BUILD_DIR=$1
+CACHE_DIR=$2
+mkdir -p $BUILD_DIR $CACHE_DIR
 
-	BUILD_DIR=$1
-	CACHE_DIR=$2
-	mkdir -p $BUILD_DIR $CACHE_DIR
-
-else
-
-	BUILD_DIR="/app"
-
-fi
+echo $BUILD_DIR
+echo $CACHE_DIR
 
 # Nginx
 cd ${BUILD_DIR}
