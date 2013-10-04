@@ -82,7 +82,7 @@ cat >bin/setup.sh <<EOF
 echo "-----> Setting up app"
 
 echo "-----> Moving /app files"
-mv /app/app/* /app
+mv ${BUILD_DIR}/app/* /app
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
 cp /app/server/php/php.ini /app/vendor/php/php.ini
