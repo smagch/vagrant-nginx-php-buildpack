@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ -f $1/app/server/nginx/nginx.conf.erb ]; then
+if [ -f $1/app/server/nginx/nginx.conf.erb || -f $1/server/nginx/nginx.conf.erb ]; then
 	echo "Nginx/PHP"
 	exit 0
 else 
