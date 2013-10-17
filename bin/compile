@@ -83,6 +83,8 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
+echo $BUILD_DIR/app/
+
 mv $BUILD_DIR/app/* $BUILD_DIR
 
 cat >bin/setup.sh <<EOF
