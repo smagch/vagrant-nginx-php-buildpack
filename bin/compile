@@ -25,6 +25,10 @@ if [ -z "$PHP_VERSION" ]; then
   PHP_VERSION=5.5.3
 fi
 
+if [ -z "$COMPOSER_PATH" ]; then
+  COMPOSER_PATH=/app/public
+fi
+
 # END CONFIG
 
 NGINX_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/nginx-${NGINX_VERSION}-heroku.tar.gz"
@@ -59,6 +63,23 @@ if [ ! -d ./vendor/php ]; then
 	echo "-----> Installing PHP v${PHP_VERSION}"
 	mkdir -p ./vendor/php && cd ./vendor/php
 	curl --silent --location $PHP_URL | tar xz
+fi
+
+if [ ! -d ./bin/composer ]; then
+	echo "-----> Installing Composer"
+	curl -s https://getcomposer.org/installer | $BUILD_DIR/vendor/php/bin/php -- --install-dir=/app/bin
+	mv $BUILD_DIR/bin/composer.phar $BUILD_DIR/bin/composer
+
+else 
+	sudo $BUILD_DIR/vendor/php/bin/php $BUILD_DIR/bin/composer self-update
+
+fi
+
+if [ -f $COMPOSER_PATH/composer.json ]; then
+	echo "-----> Installing Composer dependencies"
+	cd $COMPOSER_PATH
+	$BUILD_DIR/vendor/php/bin/php $BUILD_DIR/bin/composer config -g github-protocols https
+	$BUILD_DIR/vendor/php/bin/php $BUILD_DIR/bin/composer install --prefer-dist
 fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
