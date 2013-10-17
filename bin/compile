@@ -45,7 +45,7 @@ function indent() {
 BUILD_DIR=$1
 CACHE_DIR=$2
 mkdir -p $BUILD_DIR $CACHE_DIR
-mkdir -p ${BUILD_DIR}/bin
+mkdir -p /app/bin
 
 echo "-----> BUILD_DIR=${BUILD_DIR}"
 echo "-----> CACHE_DIR=${CACHE_DIR}"
@@ -68,19 +68,19 @@ fi
 
 if [ ! -d ./bin/composer ]; then
 	echo "-----> Installing Composer"
-	curl -s https://getcomposer.org/installer | $BUILD_DIR/vendor/php/bin/php -- --install-dir=/app/bin &
-	mv $BUILD_DIR/bin/composer.phar $BUILD_DIR/bin/composer &
+	curl -s https://getcomposer.org/installer | /app/vendor/php/bin/php -- --install-dir=/app/bin &
+	mv /app/bin/composer.phar /app/bin/composer &
 
 else 
-	sudo $BUILD_DIR/vendor/php/bin/php $BUILD_DIR/bin/composer self-update &
+	sudo /app/vendor/php/bin/php /app/bin/composer self-update &
 
 fi
 
 if [ -f $COMPOSER_PATH/composer.json ]; then
 	echo "-----> Installing Composer dependencies"
 	cd $COMPOSER_PATH
-	$BUILD_DIR/vendor/php/bin/php $BUILD_DIR/bin/composer config -g github-protocols https &
-	$BUILD_DIR/vendor/php/bin/php $BUILD_DIR/bin/composer install --prefer-dist &
+	/app/vendor/php/bin/php /app/bin/composer config -g github-protocols https &
+	/app/vendor/php/bin/php /app/bin/composer install --prefer-dist &
 fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
