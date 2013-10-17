@@ -88,6 +88,8 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
+cp -Rf /app/app/* /app
+
 cp /app/vendor/php/php/fpm/status.html /app/public/status.html
 
 cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
@@ -127,23 +129,6 @@ echo "-----> Booting nginx"
 EOF
 
 chmod +x bin/boot.sh
-
-cd /app
-
-ls -la
-
-cd ${BUILD_DIR}
-echo $BUILD_DIR
-
-ls -la
-
-cp -Rf $BUILD_DIR/app/* /app
-
-ls -la
-
-cd /app
-
-ls -la
 
 echo "-----> Done with compile"
 
