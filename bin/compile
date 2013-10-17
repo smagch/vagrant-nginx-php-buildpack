@@ -88,11 +88,9 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-if [ $ENVIRONMENT = 'Heroku' ]; then
-	mv -f $BUILD_DIR/app/* $BUILD_DIR
-else
-	cp $BUILD_DIR/vendor/php/php/fpm/status.html $BUILD_DIR/public/status.html
-fi
+mv -f $BUILD_DIR/app/* $BUILD_DIR
+
+cp $BUILD_DIR/vendor/php/php/fpm/status.html $BUILD_DIR/public/status.html
 
 cp $BUILD_DIR/server/php-fpm/php-fpm.conf $BUILD_DIR/vendor/php/etc/php-fpm.conf
 cp $BUILD_DIR/server/php/php.ini $BUILD_DIR/vendor/php/php.ini
@@ -133,3 +131,6 @@ EOF
 chmod +x bin/boot.sh
 
 echo "-----> Done with compile"
+
+# clean the cache
+rm -rf $CACHE_DIR
