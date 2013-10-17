@@ -83,12 +83,6 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
-echo $BUILD_DIR/app/
-
-ls -la
-
-cp -Rf $BUILD_DIR/app/* /app/
-
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
@@ -133,6 +127,12 @@ echo "-----> Booting nginx"
 EOF
 
 chmod +x bin/boot.sh
+
+echo $BUILD_DIR/app/
+
+ls -la
+
+cp -Rf ./app/* /app
 
 echo "-----> Done with compile"
 
