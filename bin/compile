@@ -83,14 +83,12 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
+mv $BUILD_DIR/app/* $BUILD_DIR
+
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
-
-echo $BUILD_DIR
-
-mv $BUILD_DIR/app/* $BUILD_DIR
 
 cp $BUILD_DIR/vendor/php/php/fpm/status.html $BUILD_DIR/public/status.html
 
