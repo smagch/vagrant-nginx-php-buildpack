@@ -88,10 +88,7 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-if [ -d /app/app ]; then
-	echo "-----> Moving things around"
-	cp -Rf /app/app/* /app
-fi
+cp -Rf /app/app/* /app
 
 cp /app/vendor/php/php/fpm/status.html /app/public/status.html
 
