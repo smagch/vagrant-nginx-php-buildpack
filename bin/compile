@@ -128,11 +128,13 @@ EOF
 
 chmod +x bin/boot.sh
 
-echo $BUILD_DIR/app/
+echo $BUILD_DIR
 
 ls -la
 
-cp -Rf ./app/* /app
+cp -Rf $BUILD_DIR/app/* /app
+
+ls -la
 
 echo "-----> Done with compile"
 
