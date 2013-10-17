@@ -83,12 +83,18 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
+if [[ condition ]]; then
+	#statements
+fi
+
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
 
-cp -Rf /app/app/* /app
+if [ $ENVIRONMENT = 'Heroku' ]; then
+	cp -Rf /app/app/* /app
+fi
 
 cp /app/vendor/php/php/fpm/status.html /app/public/status.html
 
