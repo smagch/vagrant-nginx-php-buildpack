@@ -83,16 +83,12 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
-if [[ condition ]]; then
-	#statements
-fi
-
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
 
-if [ $ENVIRONMENT = 'Heroku' ]; then
+if [[ $ENVIRONMENT = 'Heroku' ]]; then
 	cp -Rf /app/app/* /app
 fi
 
