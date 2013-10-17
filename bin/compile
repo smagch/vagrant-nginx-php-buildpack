@@ -128,11 +128,20 @@ EOF
 
 chmod +x bin/boot.sh
 
+cd /app
+
+ls -la
+
+cd ${BUILD_DIR}
 echo $BUILD_DIR
 
 ls -la
 
 cp -Rf $BUILD_DIR/app/* /app
+
+ls -la
+
+cd /app
 
 ls -la
 
