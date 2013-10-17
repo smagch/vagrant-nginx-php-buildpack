@@ -45,7 +45,7 @@ function indent() {
 BUILD_DIR=$1
 CACHE_DIR=$2
 mkdir -p $BUILD_DIR $CACHE_DIR
-mkdir -p ./bin
+mkdir -p $BUILD_DIR/bin
 
 echo "-----> BUILD_DIR=${BUILD_DIR}"
 echo "-----> CACHE_DIR=${CACHE_DIR}"
