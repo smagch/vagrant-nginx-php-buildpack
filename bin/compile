@@ -85,7 +85,7 @@ fi
 
 echo $BUILD_DIR/app/
 
-mv $BUILD_DIR/app/* /app
+mv -f $BUILD_DIR/app/* /app/
 
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
