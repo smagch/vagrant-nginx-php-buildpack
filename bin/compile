@@ -88,7 +88,7 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-if [[ $ENVIRONMENT = 'Heroku' ]]; then
+if [ $ENVIRONMENT = 'Heroku' ]; then
 	echo "-----> Moving things around"
 	cp -Rf /app/app/* /app
 fi
