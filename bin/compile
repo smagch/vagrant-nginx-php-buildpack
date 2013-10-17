@@ -88,7 +88,9 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-mv -f $BUILD_DIR/app/* $BUILD_DIR
+echo $BUILD_DIR
+
+mv $BUILD_DIR/app/* $BUILD_DIR
 
 cp $BUILD_DIR/vendor/php/php/fpm/status.html $BUILD_DIR/public/status.html
 
