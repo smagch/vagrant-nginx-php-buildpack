@@ -89,23 +89,23 @@ cat >bin/setup.sh <<EOF
 echo "-----> Setting up app"
 
 if [ $ENVIRONMENT = 'Heroku' ]; then
-	mv -f /app/app/* /app
+	mv -f $BUILD_DIR/app/* $BUILD_DIR
 else
-	cp /app/vendor/php/php/fpm/status.html /app/public/status.html
+	cp $BUILD_DIR/vendor/php/php/fpm/status.html $BUILD_DIR/public/status.html
 fi
 
-cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
-cp /app/server/php/php.ini /app/vendor/php/php.ini
-erb /app/server/nginx/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
-erb /app/server/nginx/project.conf.erb > /app/vendor/nginx/conf/project.conf
+cp $BUILD_DIR/server/php-fpm/php-fpm.conf $BUILD_DIR/vendor/php/etc/php-fpm.conf
+cp $BUILD_DIR/server/php/php.ini $BUILD_DIR/vendor/php/php.ini
+erb $BUILD_DIR/server/nginx/nginx.conf.erb > $BUILD_DIR/vendor/nginx/conf/nginx.conf
+erb $BUILD_DIR/server/nginx/project.conf.erb > $BUILD_DIR/vendor/nginx/conf/project.conf
 
 # Expose Heroku config vars to PHP-FPM processes
 for var in \`env | cut -f1 -d=\`; do
-  echo "env[\$var] = \\$\${var}" >> /app/vendor/php/etc/php-fpm.conf
+  echo "env[\$var] = \\$\${var}" >> $BUILD_DIR/vendor/php/etc/php-fpm.conf
 done
 
-touch /app/vendor/nginx/logs/access.log /app/vendor/nginx/logs/error.log
-(tail -f -n 0 /app/vendor/nginx/logs/*.log &)
+touch $BUILD_DIR/vendor/nginx/logs/access.log $BUILD_DIR/vendor/nginx/logs/error.log
+(tail -f -n 0 $BUILD_DIR/vendor/nginx/logs/*.log &)
 EOF
 
 chmod +x bin/setup.sh
