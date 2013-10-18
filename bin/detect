@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Usage: bin/compile <build-dir> <cache-dir>
 
 if [[ -f $1/app/server/config/nginx/nginx.conf.erb || -f $1/server/config/nginx/nginx.conf.erb ]]; then
 	echo "Nginx/PHP"

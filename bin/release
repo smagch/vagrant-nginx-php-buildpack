@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bin/release <build-dir>
+# Usage: bin/compile <build-dir> <cache-dir>
 
 cat <<EOF
 ---
