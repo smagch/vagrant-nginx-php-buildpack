@@ -18,11 +18,11 @@ if [ -z "$S3_BUILDS_BUCKET" ]; then
 fi
 
 if [ -z "$NGINX_VERSION" ]; then
-  NGINX_VERSION=1.4.2
+  NGINX_VERSION=1.4.3
 fi
 
 if [ -z "$PHP_VERSION" ]; then
-  PHP_VERSION=5.5.3
+  PHP_VERSION=5.5.4
 fi
 
 if [ -z "$COMPOSER_PATH" ]; then
@@ -45,25 +45,42 @@ function indent() {
 BUILD_DIR=$1
 CACHE_DIR=$2
 mkdir -p $BUILD_DIR $CACHE_DIR
-mkdir -p $BUILD_DIR/bin
 
-echo "-----> BUILD_DIR=${BUILD_DIR}"
-echo "-----> CACHE_DIR=${CACHE_DIR}"
+cd ${BUILD_DIR}
+if [ ! -d ./bin ]; then
+	mkdir -p bin
+fi
+
+if [ ! -d ./server/vendor ]; then
+	mkdir -p server/vendor
+fi
 
 # Nginx
 cd ${BUILD_DIR}
-if [ ! -d ./vendor/nginx ]; then
+if [ ! -d ./server/vendor/nginx-${NGINX_VERSION} ]; then
 	echo "-----> Installing Nginx v${NGINX_VERSION}"
-	mkdir -p ./vendor/nginx && cd ./vendor/nginx
+	mkdir -p ./server/vendor/nginx-${NGINX_VERSION} && cd ./server/vendor/nginx-${NGINX_VERSION}
 	curl --silent --location $NGINX_URL | tar xz
 fi
 
 # PHP
 cd ${BUILD_DIR}
-if [ ! -d ./vendor/php ]; then
+if [ ! -d ./server/vendor/php-${PHP_VERSION} ]; then
 	echo "-----> Installing PHP v${PHP_VERSION}"
-	mkdir -p ./vendor/php && cd ./vendor/php
+	mkdir -p ./server/vendor/php-${PHP_VERSION} && cd ./server/vendor/php-${PHP_VERSION}
 	curl --silent --location $PHP_URL | tar xz
+fi
+
+# Composer
+cd ${BUILD_DIR}
+if [ ! -f ./bin/composer ]; then
+	echo "-----> Installing Composer"
+	curl --silent https://getcomposer.org/installer | ./server/vendor/php-${PHP_VERSION}/bin/php -- --install-dir=bin > /dev/null 2>&1
+	cp ./bin/composer.phar ./bin/composer
+	rm ./bin/composer.phar
+else 
+	echo "-----> Updating Composer"
+	./server/vendor/php-${PHP_VERSION}/bin/php ./bin/composer self-update > /dev/null 2>&1
 fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
@@ -73,12 +90,12 @@ cd ${BUILD_DIR}
 # Remove existing scripts on development VM
 if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
-	if [ -f /app/bin/setup.sh ]; then
-		rm -rf /app/bin/setup.sh
+	if [ -f bin/setup.sh ]; then
+		rm -rf bin/setup.sh
 	fi
 
-	if [ -f /app/bin/boot.sh ]; then
-		rm -rf /app/bin/boot.sh
+	if [ -f bin/boot.sh ]; then
+		rm -rf bin/boot.sh
 	fi
 
 fi
@@ -88,22 +105,53 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-cp -Rf /app/app/* /app
+#cp -Rf /app/app/* /app
 
-cp /app/vendor/php/php/fpm/status.html /app/public/status.html
+if [[ -f /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ]]; then
+	
+	if [[ -f /app/bin/nginx ]]; then
+		rm /app/bin/nginx
+	fi
 
-cp /app/server/php-fpm/php-fpm.conf /app/vendor/php/etc/php-fpm.conf
-cp /app/server/php/php.ini /app/vendor/php/php.ini
-erb /app/server/nginx/nginx.conf.erb > /app/vendor/nginx/conf/nginx.conf
-erb /app/server/nginx/project.conf.erb > /app/vendor/nginx/conf/project.conf
+	ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx /app/bin/nginx
+fi
+
+if [[ -f /app/server/vendor/php-${PHP_VERSION}/bin/php ]]; then
+
+	if [[ -f /app/bin/php ]]; then
+		rm /app/bin/php
+	fi
+
+	ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php /app/bin/php
+fi
+
+if [[ -f /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ]]; then
+	
+	if [[ -f /app/bin/php-fpm ]]; then
+		rm /app/bin/php-fpm
+	fi
+
+	ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm /app/bin/php-fpm
+fi
+
+cp /app/server/vendor/php-${PHP_VERSION}/php/fpm/status.html /app/public/status.html
+
+cp /app/server/config/php-fpm/php-fpm.conf /app/server/vendor/php-${PHP_VERSION}/etc/php-fpm.conf
+cp /app/server/config/php/php.ini /app/server/vendor/php-${PHP_VERSION}/php.ini
+erb /app/server/config/nginx/nginx.conf.erb > /app/server/vendor/nginx-${NGINX_VERSION}/conf/nginx.conf
+erb /app/server/config/nginx/project.conf.erb > /app/server/vendor/nginx-${NGINX_VERSION}/conf/project.conf
+
+mkdir -p /app/server/logs/
+mkdir -p /app/server/logs/php-fpm
+mkdir -p /app/server/logs/nginx
 
 # Expose Heroku config vars to PHP-FPM processes
 for var in \`env | cut -f1 -d=\`; do
-  echo "env[\$var] = \\$\${var}" >> /app/vendor/php/etc/php-fpm.conf
+  echo "env[\$var] = \\$\${var}" >> /app/server/vendor/php-${PHP_VERSION}/etc/php-fpm.conf
 done
 
-touch /app/vendor/nginx/logs/access.log /app/vendor/nginx/logs/error.log
-(tail -f -n 0 /app/vendor/nginx/logs/*.log &)
+touch /app/server/logs/nginx/access.log /app/server/logs/nginx/error.log /app/server/logs/php-fpm/php-fpm.log
+(tail -f -n 0 /app/server/logs/nginx/*.log &)
 EOF
 
 chmod +x bin/setup.sh
@@ -118,14 +166,14 @@ if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 	killall -9 php-fpm
 fi
 echo "-----> Booting PHP FPM"
-/app/vendor/php/sbin/php-fpm -y /app/vendor/php/etc/php-fpm.conf -c /app/vendor/php/php.ini
+/app/bin/php-fpm -y /app/server/vendor/php-${PHP_VERSION}/etc/php-fpm.conf -c /app/server/vendor/php-${PHP_VERSION}/php.ini
 
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #stop nginx
 	echo "-----> Stopping nginx"
-	/app/vendor/nginx/sbin/nginx -s stop
+	/app/bin/nginx -s stop
 fi
 echo "-----> Booting nginx"
-/app/vendor/nginx/sbin/nginx -c /app/vendor/nginx/conf/nginx.conf
+/app/bin/nginx -c /app/server/vendor/nginx-${NGINX_VERSION}/conf/nginx.conf
 EOF
 
 chmod +x bin/boot.sh
