@@ -102,20 +102,40 @@ fi
 
 cp -Rf ${BUILD_DIR}/app/* ${BUILD_DIR}
 
-ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ${BUILD_DIR}/bin/nginx
+# Create symlink for nginx
+if [[ -f ${BUILD_DIR}/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ]]; then
+	
+	if [[ -f ${BUILD_DIR}/bin/nginx ]]; then
+		rm ${BUILD_DIR}/bin/nginx
+	fi
 
-ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php ${BUILD_DIR}/bin/php
+	ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ${BUILD_DIR}/bin/nginx
+fi
 
-ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ${BUILD_DIR}/bin/php-fpm
+# Create symlink for php
+if [[ -f ${BUILD_DIR}/server/vendor/php-${PHP_VERSION}/bin/php ]]; then
+
+	if [[ -f ${BUILD_DIR}/bin/php ]]; then
+		rm ${BUILD_DIR}/bin/php
+	fi
+
+	ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php ${BUILD_DIR}/bin/php
+fi
+
+# Create symlink for php-fpm
+if [[ -f ${BUILD_DIR}/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ]]; then
+	
+	if [[ -f ${BUILD_DIR}/bin/php-fpm ]]; then
+		rm ${BUILD_DIR}/bin/php-fpm
+	fi
+
+	ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ${BUILD_DIR}/bin/php-fpm
+fi
 
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
-
-
-
-
 
 cp /app/server/vendor/php-${PHP_VERSION}/php/fpm/status.html /app/public/status.html
 
