@@ -22,7 +22,7 @@ if [ -z "$NGINX_VERSION" ]; then
 fi
 
 if [ -z "$PHP_VERSION" ]; then
-  PHP_VERSION=5.5.4
+  PHP_VERSION=5.5.3
 fi
 
 if [ -z "$COMPOSER_PATH" ]; then
