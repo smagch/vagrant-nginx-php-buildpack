@@ -107,32 +107,13 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-if [[ -f /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ]]; then
-	
-	if [[ -f /app/bin/nginx ]]; then
-		rm /app/bin/nginx
-	fi
 
-	ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx /app/bin/nginx
-fi
 
-if [[ -f /app/server/vendor/php-${PHP_VERSION}/bin/php ]]; then
+ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx /app/bin/nginx
 
-	if [[ -f /app/bin/php ]]; then
-		rm /app/bin/php
-	fi
+ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php /app/bin/php
 
-	ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php /app/bin/php
-fi
-
-if [[ -f /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ]]; then
-	
-	if [[ -f /app/bin/php-fpm ]]; then
-		rm /app/bin/php-fpm
-	fi
-
-	ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm /app/bin/php-fpm
-fi
+ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm /app/bin/php-fpm
 
 cp /app/server/vendor/php-${PHP_VERSION}/php/fpm/status.html /app/public/status.html
 
