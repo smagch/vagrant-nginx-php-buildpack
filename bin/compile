@@ -100,12 +100,12 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
+cp -Rf ${BUILD_DIR}/app/* ${BUILD_DIR}
+
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
-
-cp -Rf /app/app/* /app
 
 if [[ -f /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ]]; then
 	
