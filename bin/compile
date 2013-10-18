@@ -13,6 +13,14 @@ fi
 
 echo "-----> Environment: ${ENVIRONMENT}"
 
+if [ -z "$CONFIG_PATH" ]; then
+  CONFIG_PATH=server/config
+fi
+
+if [ -z "$VENDOR_PATH" ]; then
+  VENDOR_PATH=server/vendor
+fi
+
 if [ -z "$S3_BUILDS_BUCKET" ]; then
   S3_BUILDS_BUCKET=ponticlaro-heroku
 fi
@@ -25,9 +33,14 @@ if [ -z "$PHP_VERSION" ]; then
   PHP_VERSION=5.5.3
 fi
 
-if [ -z "$COMPOSER_PATH" ]; then
-  COMPOSER_PATH=/app/public
+if [ -z "$COMPOSER_CONFIG_PATH" ]; then
+  COMPOSER_CONFIG_PATH=/app/public
 fi
+
+# Set several useful vars
+PHP_ROOT_PATH=$VENDOR_PATH/php-$PHP_VERSION
+NGINX_ROOT_PATH=$VENDOR_PATH/nginx-$NGINX_VERSION
+COMPOSER_CONFIG_FILE=$COMPOSER_CONFIG_PATH/composer.json
 
 # END CONFIG
 
@@ -57,30 +70,30 @@ fi
 
 # Nginx
 cd ${BUILD_DIR}
-if [ ! -d ./server/vendor/nginx-${NGINX_VERSION} ]; then
+if [ ! -d $NGINX_ROOT_PATH ]; then
 	echo "-----> Installing Nginx v${NGINX_VERSION}"
-	mkdir -p ./server/vendor/nginx-${NGINX_VERSION} && cd ./server/vendor/nginx-${NGINX_VERSION}
+	mkdir -p $NGINX_ROOT_PATH && cd $NGINX_ROOT_PATH
 	curl --silent --location $NGINX_URL | tar xz
 fi
 
 # PHP
 cd ${BUILD_DIR}
-if [ ! -d ./server/vendor/php-${PHP_VERSION} ]; then
+if [ ! -d $PHP_ROOT_PATH ]; then
 	echo "-----> Installing PHP v${PHP_VERSION}"
-	mkdir -p ./server/vendor/php-${PHP_VERSION} && cd ./server/vendor/php-${PHP_VERSION}
+	mkdir -p $PHP_ROOT_PATH && cd $PHP_ROOT_PATH
 	curl --silent --location $PHP_URL | tar xz
 fi
 
 # Composer
 cd ${BUILD_DIR}
-if [ ! -f ./bin/composer ]; then
+if [ ! -f $COMPOSER_CONFIG_FILE ]; then
 	echo "-----> Installing Composer"
-	curl --silent https://getcomposer.org/installer | ./server/vendor/php-${PHP_VERSION}/bin/php -- --install-dir=bin > /dev/null 2>&1
+	curl --silent https://getcomposer.org/installer | $PHP_ROOT_PATH/bin/php -- --install-dir=bin > /dev/null 2>&1
 	cp ./bin/composer.phar ./bin/composer
 	rm ./bin/composer.phar
 else 
 	echo "-----> Updating Composer"
-	./server/vendor/php-${PHP_VERSION}/bin/php ./bin/composer self-update > /dev/null 2>&1
+	$PHP_ROOT_PATH/bin/php ./bin/composer self-update > /dev/null 2>&1
 fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
@@ -100,58 +113,65 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
-cp -Rf ${BUILD_DIR}/app/* ${BUILD_DIR}
+# Move app contents to /app on heroku
+if [[ -d $BUILD_DIR/app ]]; then
+	cp -Rf $BUILD_DIR/app/* $BUILD_DIR
+	rm -Rf $BUILD_DIR/app
+fi
 
 # Create symlink for nginx
-if [[ -f ${BUILD_DIR}/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ]]; then
-	
-	if [[ -f ${BUILD_DIR}/bin/nginx ]]; then
-		rm ${BUILD_DIR}/bin/nginx
+if [[ -f $BUILD_DIR/$NGINX_ROOT_PATH/sbin/nginx ]]; then
+
+	if [[ -L $BUILD_DIR/bin/nginx ]]; then
+		rm $BUILD_DIR/bin/nginx
 	fi
 
-	ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ${BUILD_DIR}/bin/nginx
+	ln -s /app/$NGINX_ROOT_PATH/sbin/nginx $BUILD_DIR/bin/nginx
 fi
 
 # Create symlink for php
-if [[ -f ${BUILD_DIR}/server/vendor/php-${PHP_VERSION}/bin/php ]]; then
+if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php ]]; then
 
-	if [[ -f ${BUILD_DIR}/bin/php ]]; then
-		rm ${BUILD_DIR}/bin/php
+	if [[ -L $BUILD_DIR/bin/php ]]; then
+		rm $BUILD_DIR/bin/php
 	fi
 
-	ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php ${BUILD_DIR}/bin/php
+	ln -s /app/$PHP_ROOT_PATH/bin/php $BUILD_DIR/bin/php
 fi
 
 # Create symlink for php-fpm
-if [[ -f ${BUILD_DIR}/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ]]; then
+if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/sbin/php-fpm ]]; then
 	
-	if [[ -f ${BUILD_DIR}/bin/php-fpm ]]; then
-		rm ${BUILD_DIR}/bin/php-fpm
+	if [[ -L $BUILD_DIR/bin/php-fpm ]]; then
+		rm $BUILD_DIR/bin/php-fpm
 	fi
 
-	ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ${BUILD_DIR}/bin/php-fpm
+	ln -s /app/$PHP_ROOT_PATH/sbin/php-fpm $BUILD_DIR/bin/php-fpm
 fi
+
+cd ${BUILD_DIR}
 
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
 
-cp /app/server/vendor/php-${PHP_VERSION}/php/fpm/status.html /app/public/status.html
+cp /app/$PHP_ROOT_PATH/php/fpm/status.html /app/public/status.html
 
-cp /app/server/config/php-fpm/php-fpm.conf /app/server/vendor/php-${PHP_VERSION}/etc/php-fpm.conf
-cp /app/server/config/php/php.ini /app/server/vendor/php-${PHP_VERSION}/php.ini
-erb /app/server/config/nginx/nginx.conf.erb > /app/server/vendor/nginx-${NGINX_VERSION}/conf/nginx.conf
-erb /app/server/config/nginx/project.conf.erb > /app/server/vendor/nginx-${NGINX_VERSION}/conf/project.conf
-
-mkdir -p /app/server/logs/
-mkdir -p /app/server/logs/php-fpm
-mkdir -p /app/server/logs/nginx
+cp /app/$CONFIG_PATH/php-fpm/php-fpm.conf /app/$PHP_ROOT_PATH/etc/php-fpm.conf
+cp /app/$CONFIG_PATH/php/php.ini /app/$PHP_ROOT_PATH/php.ini
+erb -d /app/$CONFIG_PATH/nginx/nginx.conf.erb > /app/$NGINX_ROOT_PATH/conf/nginx.conf
+erb -d /app/$CONFIG_PATH/nginx/project.conf.erb > /app/$NGINX_ROOT_PATH/conf/project.conf
 
 # Expose Heroku config vars to PHP-FPM processes
 for var in \`env | cut -f1 -d=\`; do
-  echo "env[\$var] = \\$\${var}" >> /app/server/vendor/php-${PHP_VERSION}/etc/php-fpm.conf
+  echo "env[\$var] = \\$\${var}" >> /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 done
+
+# Make dirs for logs
+mkdir -p /app/server/logs/
+mkdir -p /app/server/logs/php-fpm
+mkdir -p /app/server/logs/nginx
 
 touch /app/server/logs/nginx/access.log /app/server/logs/nginx/error.log /app/server/logs/php-fpm/php-fpm.log
 (tail -f -n 0 /app/server/logs/nginx/*.log &)
@@ -169,14 +189,14 @@ if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 	killall -9 php-fpm
 fi
 echo "-----> Booting PHP FPM"
-/app/bin/php-fpm -y /app/server/vendor/php-${PHP_VERSION}/etc/php-fpm.conf -c /app/server/vendor/php-${PHP_VERSION}/php.ini
+/app/bin/php-fpm -y /app/$PHP_ROOT_PATH/etc/php-fpm.conf -c /app/$PHP_ROOT_PATH/php.ini
 
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #stop nginx
 	echo "-----> Stopping nginx"
 	/app/bin/nginx -s stop
 fi
 echo "-----> Booting nginx"
-/app/bin/nginx -c /app/server/vendor/nginx-${NGINX_VERSION}/conf/nginx.conf
+/app/bin/nginx -c /app/$NGINX_ROOT_PATH/conf/nginx.conf
 EOF
 
 chmod +x bin/boot.sh
