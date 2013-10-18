@@ -102,11 +102,11 @@ fi
 
 cp -Rf ${BUILD_DIR}/app/* ${BUILD_DIR}
 
-ln -s ${BUILD_DIR}/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ${BUILD_DIR}/bin/nginx
+ln -s /app/server/vendor/nginx-${NGINX_VERSION}/sbin/nginx ${BUILD_DIR}/bin/nginx
 
-ln -s ${BUILD_DIR}/server/vendor/php-${PHP_VERSION}/bin/php ${BUILD_DIR}/bin/php
+ln -s /app/server/vendor/php-${PHP_VERSION}/bin/php ${BUILD_DIR}/bin/php
 
-ln -s ${BUILD_DIR}/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ${BUILD_DIR}/bin/php-fpm
+ln -s /app/server/vendor/php-${PHP_VERSION}/sbin/php-fpm ${BUILD_DIR}/bin/php-fpm
 
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
