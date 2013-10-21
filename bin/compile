@@ -38,6 +38,7 @@ if [ -z "$COMPOSER_CONFIG_PATH" ]; then
 fi
 
 # Set several useful vars
+APP_BIN_PATH=bin
 PHP_ROOT_PATH=$VENDOR_PATH/php-$PHP_VERSION
 NGINX_ROOT_PATH=$VENDOR_PATH/nginx-$NGINX_VERSION
 COMPOSER_CONFIG_FILE=$COMPOSER_CONFIG_PATH/composer.json
@@ -86,7 +87,7 @@ fi
 
 # Composer
 cd ${BUILD_DIR}
-if [ ! -f $COMPOSER_CONFIG_FILE ]; then
+if [ -f $COMPOSER_CONFIG_FILE && ! -f $APP_BIN_PATH/composer ]; then
 	echo "-----> Installing Composer"
 	curl --silent https://getcomposer.org/installer | $PHP_ROOT_PATH/bin/php -- --install-dir=bin > /dev/null 2>&1
 	cp ./bin/composer.phar ./bin/composer
