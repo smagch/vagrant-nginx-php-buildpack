@@ -159,10 +159,9 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-cp /app/$PHP_ROOT_PATH/php/fpm/status.html /app/public/status.html
-
-cp /app/$CONFIG_PATH/php-fpm/php-fpm.conf /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 cp /app/$CONFIG_PATH/php/php.ini /app/$PHP_ROOT_PATH/php.ini
+
+erb -d /app/$CONFIG_PATH/php-fpm/php-fpm.conf.erb > /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 erb -d /app/$CONFIG_PATH/nginx/nginx.conf.erb > /app/$NGINX_ROOT_PATH/conf/nginx.conf
 erb -d /app/$CONFIG_PATH/nginx/project.conf.erb > /app/$NGINX_ROOT_PATH/conf/project.conf
 
