@@ -92,9 +92,11 @@ if [[ -f $COMPOSER_CONFIG_FILE && ! -f $APP_BIN_PATH/composer ]]; then
 	curl --silent https://getcomposer.org/installer | $PHP_ROOT_PATH/bin/php -- --install-dir=bin > /dev/null 2>&1
 	cp ./bin/composer.phar ./bin/composer
 	rm ./bin/composer.phar
-else 
+
+elif [[ -f $COMPOSER_CONFIG_FILE && -f $APP_BIN_PATH/composer ]]; then
 	echo "-----> Updating Composer"
 	$PHP_ROOT_PATH/bin/php ./bin/composer self-update > /dev/null 2>&1
+
 fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
