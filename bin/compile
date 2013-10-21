@@ -87,7 +87,7 @@ fi
 
 # Composer
 cd ${BUILD_DIR}
-if [ -f $COMPOSER_CONFIG_FILE && ! -f $APP_BIN_PATH/composer ]; then
+if [ -f $COMPOSER_CONFIG_FILE ] && [ ! -f $APP_BIN_PATH/composer ]; then
 	echo "-----> Installing Composer"
 	curl --silent https://getcomposer.org/installer | $PHP_ROOT_PATH/bin/php -- --install-dir=bin > /dev/null 2>&1
 	cp ./bin/composer.phar ./bin/composer
