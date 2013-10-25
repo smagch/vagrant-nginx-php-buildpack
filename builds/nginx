@@ -35,4 +35,4 @@ popd
 #popd
 
 # build and package nginx for heroku
-vulcan build -v -s nginx-$NGINX_VERSION -o $tempdir/nginx-$NGINX_VERSION-heroku.tar.gz -p /app/server/vendor/nginx-$NGINX_VERSION -c "./configure --prefix=/app/server/vendor/nginx-${NGINX_VERSION} --with-pcre=contrib/pcre-8.21 --with-http_ssl_module --with-http_gzip_static_module && make install" 
+vulcan build -v -s nginx-$NGINX_VERSION -o $tempdir/nginx-$NGINX_VERSION-heroku.tar.gz -p /app/server/vendor/nginx-$NGINX_VERSION -c "./configure --prefix=/app/server/vendor/nginx-${NGINX_VERSION} --with-pcre=contrib/pcre-8.21 --with-http_ssl_module --with-http_gzip_static_module --with-debug && make install" 
