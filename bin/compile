@@ -172,10 +172,11 @@ done
 
 # Make dirs for logs
 mkdir -p /app/server/logs/
+mkdir -p /app/server/logs/php
 mkdir -p /app/server/logs/php-fpm
 mkdir -p /app/server/logs/nginx
 
-touch /app/server/logs/nginx/access.log /app/server/logs/nginx/error.log /app/server/logs/php-fpm/php-fpm.log
+touch /app/server/logs/php/error.log /app/server/logs/nginx/access.log /app/server/logs/nginx/error.log /app/server/logs/php-fpm/php-fpm.log
 (tail -f -n 0 /app/server/logs/nginx/*.log &)
 EOF
 
