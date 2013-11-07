@@ -101,17 +101,12 @@ if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php ]]; then
 	ln -s /app/$PHP_ROOT_PATH/bin/php $BUILD_DIR/bin/php
 fi
 
-cd $BUILD_DIR/bin
-ls -al
-
 # NEW RELIC
 cd $BUILD_DIR
 if [ ! -d $NEW_RELIC_ROOT_PATH ]; then
 	echo "-----> Installing NEW RELIC v${NEW_RELIC_VERSION}"
 	mkdir -p $NEW_RELIC_ROOT_PATH && cd $NEW_RELIC_ROOT_PATH
 	curl --silent --location $NEW_RELIC_URL | tar xz --strip 1
-
-	cp -f ./agent/x64/newrelic-`$BUILD_DIR/$PHP_ROOT_PATH/bin/phpize --version | grep "Zend Module Api No" | tr -d ' ' | cut -f 2 -d ':'`.so `$BUILD_DIR/$PHP_ROOT_PATH/bin/php-config --extension-dir`/newrelic.so
 fi
 
 # Composer
@@ -187,6 +182,8 @@ cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
+
+cp -f ./agent/x64/newrelic-`/app/$PHP_ROOT_PATH/bin/phpize --version | grep "Zend Module Api No" | tr -d ' ' | cut -f 2 -d ':'`.so `/app/$PHP_ROOT_PATH/bin/php-config --extension-dir`/newrelic.so
 
 erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
 
