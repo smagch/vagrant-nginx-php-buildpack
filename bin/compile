@@ -33,6 +33,10 @@ if [ -z "$PHP_VERSION" ]; then
   PHP_VERSION=5.5.3
 fi
 
+if [ -z "$NEW_RELIC_VERSION" ]; then
+  NEW_RELIC_VERSION=4.1.5.24
+fi
+
 if [ -z "$COMPOSER_CONFIG_PATH" ]; then
   COMPOSER_CONFIG_PATH=/app/public
 fi
@@ -41,12 +45,14 @@ fi
 APP_BIN_PATH=bin
 PHP_ROOT_PATH=$VENDOR_PATH/php-$PHP_VERSION
 NGINX_ROOT_PATH=$VENDOR_PATH/nginx-$NGINX_VERSION
+NEW_RELIC_ROOT_PATH=$VENDOR_PATH/newrelic-php5-$NEW_RELIC_VERSION
 COMPOSER_CONFIG_FILE=$COMPOSER_CONFIG_PATH/composer.json
 
 # END CONFIG
 
 NGINX_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/nginx-${NGINX_VERSION}-heroku.tar.gz"
 PHP_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/php-${PHP_VERSION}-with-fpm-heroku.tar.gz"
+NEW_RELIC_URL="http://download.newrelic.com/php_agent/archive/${NEW_RELIC_VERSION}/newrelic-php5-${NEW_RELIC_VERSION}-linux.tar.gz"
 
 function indent() {
 	c='s/^/       /'
@@ -60,7 +66,7 @@ BUILD_DIR=$1
 CACHE_DIR=$2
 mkdir -p $BUILD_DIR $CACHE_DIR
 
-cd ${BUILD_DIR}
+cd $BUILD_DIR
 if [ ! -d ./bin ]; then
 	mkdir -p bin
 fi
@@ -70,7 +76,7 @@ if [ ! -d ./server/vendor ]; then
 fi
 
 # Nginx
-cd ${BUILD_DIR}
+cd $BUILD_DIR
 if [ ! -d $NGINX_ROOT_PATH ]; then
 	echo "-----> Installing Nginx v${NGINX_VERSION}"
 	mkdir -p $NGINX_ROOT_PATH && cd $NGINX_ROOT_PATH
@@ -78,15 +84,45 @@ if [ ! -d $NGINX_ROOT_PATH ]; then
 fi
 
 # PHP
-cd ${BUILD_DIR}
+cd $BUILD_DIR
 if [ ! -d $PHP_ROOT_PATH ]; then
 	echo "-----> Installing PHP v${PHP_VERSION}"
 	mkdir -p $PHP_ROOT_PATH && cd $PHP_ROOT_PATH
 	curl --silent --location $PHP_URL | tar xz
 fi
 
+# Create php symlinks
+if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php ]]; then
+
+	if [[ -L $BUILD_DIR/bin/php ]]; then
+		rm $BUILD_DIR/bin/php
+	fi
+
+	if [[ -L $BUILD_DIR/bin/phpize ]]; then
+		rm $BUILD_DIR/bin/phpize
+	fi
+
+	if [[ -L $BUILD_DIR/bin/php-config ]]; then
+		rm $BUILD_DIR/bin/php-config
+	fi
+
+	ln -s /app/$PHP_ROOT_PATH/bin/php $BUILD_DIR/bin/php
+	ln -s /app/$PHP_ROOT_PATH/bin/phpize $BUILD_DIR/bin/phpize
+	ln -s /app/$PHP_ROOT_PATH/bin/php-config $BUILD_DIR/bin/php-config
+fi
+
+# NEW RELIC
+cd $BUILD_DIR
+if [ ! -d $NEW_RELIC_ROOT_PATH ]; then
+	echo "-----> Installing NEW RELIC v${NEW_RELIC_VERSION}"
+	mkdir -p $NEW_RELIC_ROOT_PATH && cd $NEW_RELIC_ROOT_PATH
+	curl --silent --location $NEW_RELIC_URL | tar xz --strip 1
+
+	cp -f ./agent/x64/newrelic-`$BUILD_DIR/bin/phpize --version | grep "Zend Module Api No" | tr -d ' ' | cut -f 2 -d ':'`.so `$BUILD_DIR/bin/php-config --extension-dir`/newrelic.so
+fi
+
 # Composer
-cd ${BUILD_DIR}
+cd $BUILD_DIR
 if [[ -f $COMPOSER_CONFIG_FILE && ! -f $APP_BIN_PATH/composer ]]; then
 	echo "-----> Installing Composer"
 	curl --silent https://getcomposer.org/installer | $PHP_ROOT_PATH/bin/php -- --install-dir=bin > /dev/null 2>&1
@@ -101,7 +137,7 @@ fi
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
 echo "-----> Installing boot script"
-cd ${BUILD_DIR}
+cd $BUILD_DIR
 
 # Remove existing scripts on development VM
 if [[ $ENVIRONMENT = 'Vagrant' ]]; then
@@ -132,14 +168,14 @@ if [[ -f $BUILD_DIR/$NGINX_ROOT_PATH/sbin/nginx ]]; then
 	ln -s /app/$NGINX_ROOT_PATH/sbin/nginx $BUILD_DIR/bin/nginx
 fi
 
-# Create symlink for php
-if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php ]]; then
+# Create symlink for new relic daemon
+if [[ -f $BUILD_DIR/$NEW_RELIC_ROOT_PATH/daemon/newrelic-daemon.x64 ]]; then
 
-	if [[ -L $BUILD_DIR/bin/php ]]; then
-		rm $BUILD_DIR/bin/php
+	if [[ -L $BUILD_DIR/bin/newrelic-daemon ]]; then
+		rm $BUILD_DIR/bin/newrelic-daemon
 	fi
 
-	ln -s /app/$PHP_ROOT_PATH/bin/php $BUILD_DIR/bin/php
+	ln -s /app/$NEW_RELIC_ROOT_PATH/daemon/newrelic-daemon.x64 $BUILD_DIR/bin/newrelic-daemon
 fi
 
 # Create symlink for php-fpm
@@ -152,32 +188,38 @@ if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/sbin/php-fpm ]]; then
 	ln -s /app/$PHP_ROOT_PATH/sbin/php-fpm $BUILD_DIR/bin/php-fpm
 fi
 
-cd ${BUILD_DIR}
+cd $BUILD_DIR
 
 cat >bin/setup.sh <<EOF
 #!/usr/bin/env bash
 
 echo "-----> Setting up app"
 
-cp /app/$CONFIG_PATH/php/php.ini /app/$PHP_ROOT_PATH/php.ini
+erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
 
 erb -d /app/$CONFIG_PATH/php-fpm/php-fpm.conf.erb > /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 erb -d /app/$CONFIG_PATH/nginx/nginx.conf.erb > /app/$NGINX_ROOT_PATH/conf/nginx.conf
 erb -d /app/$CONFIG_PATH/nginx/project.conf.erb > /app/$NGINX_ROOT_PATH/conf/project.conf
+erb -d /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb > /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
 
 # Expose Heroku config vars to PHP-FPM processes
 for var in \`env | cut -f1 -d=\`; do
   echo "env[\$var] = \\$\${var}" >> /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 done
 
+if [[ -f /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg && "${NEW_RELIC_LICENSE_KEY}" ]]; then
+	sed -i "s|REPLACE_WITH_REAL_KEY|${NEW_RELIC_LICENSE_KEY}|g" /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
+fi
+
 # Make dirs for logs
 mkdir -p /app/server/logs/
 mkdir -p /app/server/logs/php
 mkdir -p /app/server/logs/php-fpm
 mkdir -p /app/server/logs/nginx
+mkdir -p /app/server/logs/ /app/server/logs/php /app/server/logs/php-fpm /app/server/logs/nginx /app/server/logs/newrelic
 
-touch /app/server/logs/php/error.log /app/server/logs/nginx/access.log /app/server/logs/nginx/error.log /app/server/logs/php-fpm/php-fpm.log
-(tail -f -n 0 /app/server/logs/nginx/*.log &)
+touch /app/server/logs/php/error.log /app/server/logs/nginx/access.log /app/server/logs/nginx/error.log /app/server/logs/php-fpm/php-fpm.log /app/server/logs/newrelic/newrelic-daemon.log /app/server/logs/newrelic/php_agent.log
+(tail -f -n 0 /app/server/logs/nginx/*.log /app/server/logs/php/*.log /app/server/logs/php-fpm/*.log /app/server/logs/newrelic/*.log &)
 EOF
 
 chmod +x bin/setup.sh
@@ -186,6 +228,15 @@ cat >bin/boot.sh <<EOF
 #!/usr/bin/env bash
 
 /app/bin/setup.sh
+
+#if [[ -L /app/bin/newrelic-daemon ]]; then
+	if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
+		echo "-----> Killing NEW RELIC Daemon instances"
+		killall -9 newrelic-daemon
+	fi
+	echo "-----> Booting NEW RELIC Daemon"
+	/app/bin/newrelic-daemon -c /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg -d error
+#fi
 
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 	echo "-----> Killing PHP FPM instances"
