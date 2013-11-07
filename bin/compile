@@ -119,6 +119,9 @@ if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php-config ]]; then
 	ln -s /app/$PHP_ROOT_PATH/bin/php-config $BUILD_DIR/bin/php-config
 fi
 
+cd $BUILD_DIR/bin
+ls -al
+
 # NEW RELIC
 cd $BUILD_DIR
 if [ ! -d $NEW_RELIC_ROOT_PATH ]; then
