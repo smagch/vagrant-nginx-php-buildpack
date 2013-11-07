@@ -98,16 +98,24 @@ if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php ]]; then
 		rm $BUILD_DIR/bin/php
 	fi
 
+	ln -s /app/$PHP_ROOT_PATH/bin/php $BUILD_DIR/bin/php
+fi
+
+if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/phpize ]]; then
+
 	if [[ -L $BUILD_DIR/bin/phpize ]]; then
 		rm $BUILD_DIR/bin/phpize
 	fi
+
+	ln -s /app/$PHP_ROOT_PATH/bin/phpize $BUILD_DIR/bin/phpize
+fi
+
+if [[ -f $BUILD_DIR/$PHP_ROOT_PATH/bin/php-config ]]; then
 
 	if [[ -L $BUILD_DIR/bin/php-config ]]; then
 		rm $BUILD_DIR/bin/php-config
 	fi
 
-	ln -s /app/$PHP_ROOT_PATH/bin/php $BUILD_DIR/bin/php
-	ln -s /app/$PHP_ROOT_PATH/bin/phpize $BUILD_DIR/bin/phpize
 	ln -s /app/$PHP_ROOT_PATH/bin/php-config $BUILD_DIR/bin/php-config
 fi
 
