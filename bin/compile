@@ -183,7 +183,7 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-cp -f /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-`/app/$PHP_ROOT_PATH/bin/phpize --version | grep "Zend Module Api No" | tr -d ' ' | cut -f 2 -d ':'`.so `/app/$PHP_ROOT_PATH/bin/php-config --extension-dir`/newrelic.so
+cp -f /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-`./$PHP_ROOT_PATH/bin/phpize --version | grep "Zend Module Api No" | tr -d ' ' | cut -f 2 -d ':'`.so `./$PHP_ROOT_PATH/bin/php-config --extension-dir`/newrelic.so
 
 erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
 
