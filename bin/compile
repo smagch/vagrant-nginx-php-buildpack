@@ -183,7 +183,7 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-cp -f /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so `./$PHP_ROOT_PATH/bin/php-config --extension-dir`/newrelic.so
+cp -f /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so /app/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so
 
 erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
 
