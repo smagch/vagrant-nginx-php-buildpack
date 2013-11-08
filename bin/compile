@@ -164,8 +164,16 @@ if [[ -f $BUILD_DIR/$NEW_RELIC_ROOT_PATH/daemon/newrelic-daemon.x64 ]]; then
 	fi
 
 	ln -s /app/$NEW_RELIC_ROOT_PATH/daemon/newrelic-daemon.x64 $BUILD_DIR/bin/newrelic-daemon
-	ln -s /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so $BUILD_DIR/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so
+fi
 
+# Create symlink for new relic php agent
+if [[ -f $BUILD_DIR/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so ]]; then
+
+	if [[ -L $BUILD_DIR/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so ]]; then
+		rm $BUILD_DIR/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so
+	fi
+
+	ln -s /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so $BUILD_DIR/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so
 fi
 
 # Create symlink for php-fpm
