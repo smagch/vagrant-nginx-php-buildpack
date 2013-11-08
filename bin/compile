@@ -164,6 +164,8 @@ if [[ -f $BUILD_DIR/$NEW_RELIC_ROOT_PATH/daemon/newrelic-daemon.x64 ]]; then
 	fi
 
 	ln -s /app/$NEW_RELIC_ROOT_PATH/daemon/newrelic-daemon.x64 $BUILD_DIR/bin/newrelic-daemon
+	ln -s /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so $BUILD_DIR/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so
+
 fi
 
 # Create symlink for php-fpm
@@ -183,10 +185,7 @@ cat >bin/setup.sh <<EOF
 
 echo "-----> Setting up app"
 
-cp -f /app/$NEW_RELIC_ROOT_PATH/agent/x64/newrelic-20121212.so /app/$PHP_ROOT_PATH/lib/php/extensions/no-debug-non-zts-20121212/newrelic.so
-
 erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
-
 erb -d /app/$CONFIG_PATH/php-fpm/php-fpm.conf.erb > /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 erb -d /app/$CONFIG_PATH/nginx/nginx.conf.erb > /app/$NGINX_ROOT_PATH/conf/nginx.conf
 erb -d /app/$CONFIG_PATH/nginx/project.conf.erb > /app/$NGINX_ROOT_PATH/conf/project.conf
