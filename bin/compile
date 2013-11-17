@@ -130,7 +130,7 @@ elif [[ -f $COMPOSER_CONFIG_FILE && -f $APP_BIN_PATH/composer ]]; then
 fi
 
 # WordPress
-if [[ $APP_PUBLIC_PATH/wp-config.php ]]; then
+if [[ -f $APP_PUBLIC_PATH/wp-config.php ]]; then
 	echo "-----> Installing WordPress v${WORDPRESS_VERSION}"
 	cd $BUILD_DIR/$APP_PUBLIC_PATH
 	curl --silent --location $WORDPRESS_URL | tar xz
