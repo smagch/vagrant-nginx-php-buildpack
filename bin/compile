@@ -41,8 +41,13 @@ if [ -z "$COMPOSER_CONFIG_PATH" ]; then
   COMPOSER_CONFIG_PATH=/app/public
 fi
 
+if [ -z "$WORDPRESS_VERSION" ]; then
+  WORDPRESS_VERSION=3.7.1
+fi
+
 # Set several useful vars
 APP_BIN_PATH=bin
+APP_PUBLIC_PATH=public
 PHP_ROOT_PATH=$VENDOR_PATH/php-$PHP_VERSION
 NGINX_ROOT_PATH=$VENDOR_PATH/nginx-$NGINX_VERSION
 NEW_RELIC_ROOT_PATH=$VENDOR_PATH/newrelic-php5-$NEW_RELIC_VERSION
@@ -52,6 +57,7 @@ COMPOSER_CONFIG_FILE=$COMPOSER_CONFIG_PATH/composer.json
 
 NGINX_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/nginx-${NGINX_VERSION}-heroku.tar.gz"
 PHP_URL="https://s3.amazonaws.com/${S3_BUILDS_BUCKET}/builds/php-${PHP_VERSION}-with-fpm-heroku.tar.gz"
+WORDPRESS_URL="http://wordpress.org/wordpress-${WORDPRESS_VERSION}.tar.gz"
 NEW_RELIC_URL="http://download.newrelic.com/php_agent/archive/${NEW_RELIC_VERSION}/newrelic-php5-${NEW_RELIC_VERSION}-linux.tar.gz"
 
 function indent() {
@@ -120,6 +126,16 @@ if [[ -f $COMPOSER_CONFIG_FILE && ! -f $APP_BIN_PATH/composer ]]; then
 elif [[ -f $COMPOSER_CONFIG_FILE && -f $APP_BIN_PATH/composer ]]; then
 	echo "-----> Updating Composer"
 	$PHP_ROOT_PATH/bin/php ./bin/composer self-update > /dev/null 2>&1
+
+fi
+
+# WordPress
+if [[ $APP_PUBLIC_PATH/wp-config.php ]]; then
+	echo "-----> Installing WordPress v${WORDPRESS_VERSION}"
+	cd $BUILD_DIR/$APP_PUBLIC_PATH
+	curl --silent --location $WORDPRESS_URL | tar xz
+	cp -rf wordpress/* public
+	rm -rf wordpress
 
 fi
 
