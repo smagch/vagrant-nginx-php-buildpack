@@ -109,7 +109,7 @@ fi
 
 # NEW RELIC
 cd $BUILD_DIR
-if [ -n $NEW_RELIC_LICENSE_KEY && ! -d $NEW_RELIC_ROOT_PATH ]; then
+if [[ -n $NEW_RELIC_LICENSE_KEY && ! -d $NEW_RELIC_ROOT_PATH ]]; then
 	echo "-----> Installing NEW RELIC v${NEW_RELIC_VERSION}"
 	mkdir -p $NEW_RELIC_ROOT_PATH && cd $NEW_RELIC_ROOT_PATH
 	curl --silent --location $NEW_RELIC_URL | tar xz --strip 1
