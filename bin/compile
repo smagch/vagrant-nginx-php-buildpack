@@ -109,7 +109,7 @@ fi
 
 # NEW RELIC
 cd $BUILD_DIR
-if [[ -n $NEW_RELIC_LICENSE_KEY && ! -d $NEW_RELIC_ROOT_PATH ]]; then
+if [[ -n $NEW_RELIC_LICENSE_KEY && -f /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb && ! -d $NEW_RELIC_ROOT_PATH ]]; then
 	echo "-----> Installing NEW RELIC v${NEW_RELIC_VERSION}"
 	mkdir -p $NEW_RELIC_ROOT_PATH && cd $NEW_RELIC_ROOT_PATH
 	curl --silent --location $NEW_RELIC_URL | tar xz --strip 1
@@ -214,7 +214,9 @@ erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
 erb -d /app/$CONFIG_PATH/php-fpm/php-fpm.conf.erb > /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 erb -d /app/$CONFIG_PATH/nginx/nginx.conf.erb > /app/$NGINX_ROOT_PATH/conf/nginx.conf
 erb -d /app/$CONFIG_PATH/nginx/project.conf.erb > /app/$NGINX_ROOT_PATH/conf/project.conf
-erb -d /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb > /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
+if [[ -f /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb ]]; then
+	erb -d /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb > /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
+fi
 
 # Expose Heroku config vars to PHP-FPM processes
 for var in \`env | cut -f1 -d=\`; do
