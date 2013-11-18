@@ -132,11 +132,10 @@ fi
 
 # WordPress
 cd $BUILD_DIR
-if [[ -f $APP_PUBLIC_PATH/wp-config.php && ! -d $WORDPRESS_ROOT_PATH ]]; then
+if [[ -f $APP_PUBLIC_PATH/wp-config.php && ! -f $APP_PUBLIC_PATH/wp-load.php ]]; then
 	echo "-----> Installing WordPress v${WORDPRESS_VERSION}"
-	mkdir -p $WORDPRESS_ROOT_PATH && cd $WORDPRESS_ROOT_PATH
+	cd $APP_PUBLIC_PATH
 	curl --silent --location $WORDPRESS_URL | tar xz --strip 1
-	cp -rf $WORDPRESS_ROOT_PATH/* $BUILD_DIR/public
 
 fi
 
