@@ -156,6 +156,9 @@ if [[ $ENVIRONMENT = 'Vagrant' ]]; then
 
 fi
 
+# include .files when moving things around
+shopt -s dotglob
+
 # Move app contents to /app on heroku
 if [[ -d $BUILD_DIR/app ]]; then
 	cp -Rf $BUILD_DIR/app/* $BUILD_DIR
