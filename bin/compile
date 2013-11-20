@@ -113,7 +113,7 @@ cd $BUILD_DIR
 if [[ -n $NEW_RELIC_LICENSE_KEY && -f $CONFIG_PATH/newrelic/newrelic.cfg.erb && ! -d $NEW_RELIC_ROOT_PATH ]]; then
 	echo "-----> Installing NEW RELIC v${NEW_RELIC_VERSION}"
 	mkdir -p $NEW_RELIC_ROOT_PATH && cd $NEW_RELIC_ROOT_PATH
-	curl --silent --location $NEW_RELIC_URL | tar xz --strip 1
+	curl --location $NEW_RELIC_URL | tar xz --strip 1
 fi
 
 # Composer
@@ -216,18 +216,15 @@ erb -d /app/$CONFIG_PATH/php/php.ini.erb > /app/$PHP_ROOT_PATH/php.ini
 erb -d /app/$CONFIG_PATH/php-fpm/php-fpm.conf.erb > /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 erb -d /app/$CONFIG_PATH/nginx/nginx.conf.erb > /app/$NGINX_ROOT_PATH/conf/nginx.conf
 erb -d /app/$CONFIG_PATH/nginx/project.conf.erb > /app/$NGINX_ROOT_PATH/conf/project.conf
-if [[ -f /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb ]]; then
+if [[ -f /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb && "${NEW_RELIC_LICENSE_KEY}" ]]; then
 	erb -d /app/$CONFIG_PATH/newrelic/newrelic.cfg.erb > /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
+	sed -i "s|REPLACE_WITH_REAL_KEY|${NEW_RELIC_LICENSE_KEY}|g" /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
 fi
 
 # Expose Heroku config vars to PHP-FPM processes
 for var in \`env | cut -f1 -d=\`; do
   echo "env[\$var] = \\$\${var}" >> /app/$PHP_ROOT_PATH/etc/php-fpm.conf
 done
-
-if [[ -f /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg && "${NEW_RELIC_LICENSE_KEY}" ]]; then
-	sed -i "s|REPLACE_WITH_REAL_KEY|${NEW_RELIC_LICENSE_KEY}|g" /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg
-fi
 
 # Make dirs for logs
 mkdir -p /app/server/logs/
@@ -247,14 +244,14 @@ cat >bin/boot.sh <<EOF
 
 /app/bin/setup.sh
 
-#if [[ -L /app/bin/newrelic-daemon ]]; then
+if [[ -f /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg ]]; then
 	if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 		echo "-----> Killing NEW RELIC Daemon instances"
 		killall -9 newrelic-daemon
 	fi
 	echo "-----> Booting NEW RELIC Daemon"
 	/app/bin/newrelic-daemon -c /app/$NEW_RELIC_ROOT_PATH/newrelic.cfg -d error
-#fi
+fi
 
 if [ $ENVIRONMENT = 'Vagrant'  ]; then #kill any php-fpm instance
 	echo "-----> Killing PHP FPM instances"
